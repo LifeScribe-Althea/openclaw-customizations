@@ -28,6 +28,11 @@
 
   // Switch to a different agent
   function switchAgent(agentId) {
+    // Notify voice UI of agent switch
+    if (window.voiceUI) {
+      window.voiceUI.switchAgent(agentId);
+    }
+
     const newUrl = `${window.location.origin}/chat?session=agent:${agentId}:main`;
     window.location.href = newUrl;
   }
@@ -215,6 +220,119 @@
       openclaw-app {
         margin-left: 200px;
       }
+
+      /* Voice Controls Styles */
+      .voice-controls {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #1a1a1a;
+        border-top: 1px solid #333;
+        padding: 12px;
+      }
+
+      .voice-header {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #4a9eff;
+        margin-bottom: 8px;
+      }
+
+      .voice-current {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        padding: 8px;
+        background: #2a2a2a;
+        border-radius: 4px;
+      }
+
+      .voice-name {
+        font-weight: 500;
+        color: #fff;
+        font-size: 13px;
+      }
+
+      .voice-indicator {
+        display: none;
+        animation: pulse 1s infinite;
+        font-size: 16px;
+      }
+
+      .voice-indicator.speaking {
+        display: inline-block;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+      }
+
+      .voice-toggles {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .voice-toggles label {
+        font-size: 12px;
+        color: #ccc;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .voice-toggles input[type="checkbox"] {
+        cursor: pointer;
+      }
+
+      .voice-toggles select {
+        margin-left: auto;
+        background: #2a2a2a;
+        color: #fff;
+        border: 1px solid #3a3a3a;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .voice-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .voice-actions button {
+        flex: 1;
+        padding: 8px;
+        background: #2d7ff9;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: background 0.2s ease;
+      }
+
+      .voice-actions button:hover {
+        background: #4a9eff;
+      }
+
+      .voice-actions button:active {
+        transform: scale(0.98);
+      }
+
+      /* Adjust wrapper for voice controls */
+      .agent-selector-wrapper {
+        padding-bottom: 180px !important; /* Make room for voice controls */
+      }
     `;
     document.head.appendChild(style);
     console.log('✅ Agent selector styles injected');
@@ -286,8 +404,107 @@
       }
     });
 
+    // Add voice controls section
+    const voiceSection = createVoiceControls(currentAgent);
+    wrapper.appendChild(voiceSection);
+
     console.log('✅ Agent selector UI created');
     return wrapper;
+  }
+
+  // Create voice controls UI
+  function createVoiceControls(currentAgent) {
+    console.log('🎤 Creating voice controls...');
+
+    const voiceSection = document.createElement('div');
+    voiceSection.className = 'voice-controls';
+    voiceSection.id = 'voice-controls';
+
+    voiceSection.innerHTML = `
+      <div class="voice-header">Voice Settings</div>
+      <div class="voice-current">
+        <span class="voice-name" id="current-voice-name">Loading...</span>
+        <span class="voice-indicator" id="speaking-indicator" style="display: none;">🔊</span>
+      </div>
+      <div class="voice-toggles">
+        <label>
+          <input type="checkbox" id="auto-play-toggle" checked>
+          Auto-play responses
+        </label>
+        <label>
+          Speed:
+          <select id="voice-speed">
+            <option value="0.75">0.75x</option>
+            <option value="1.0" selected>1.0x</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+          </select>
+        </label>
+      </div>
+      <div class="voice-actions">
+        <button id="test-voice-btn">Test Voice</button>
+      </div>
+    `;
+
+    // Set up event listeners
+    setTimeout(() => {
+      const autoPlayToggle = document.getElementById('auto-play-toggle');
+      const voiceSpeed = document.getElementById('voice-speed');
+      const testVoiceBtn = document.getElementById('test-voice-btn');
+
+      if (autoPlayToggle) {
+        autoPlayToggle.addEventListener('change', (e) => {
+          if (window.voiceUI) {
+            window.voiceUI.toggleAutoPlay(e.target.checked);
+          }
+        });
+      }
+
+      if (voiceSpeed) {
+        voiceSpeed.addEventListener('change', (e) => {
+          if (window.voiceUI) {
+            window.voiceUI.setSpeed(parseFloat(e.target.value));
+          }
+        });
+      }
+
+      if (testVoiceBtn) {
+        testVoiceBtn.addEventListener('click', () => {
+          if (window.voiceUI) {
+            window.voiceUI.testVoice();
+          }
+        });
+      }
+
+      // Update voice name when voiceUI is ready
+      const checkVoiceUI = setInterval(() => {
+        if (window.voiceUI && window.voiceUI.initialized) {
+          clearInterval(checkVoiceUI);
+          window.voiceUI.updateVoiceDisplay();
+
+          // Load saved preferences
+          const saved = localStorage.getItem('voiceui-preferences');
+          if (saved) {
+            try {
+              const prefs = JSON.parse(saved);
+              if (autoPlayToggle) {
+                autoPlayToggle.checked = prefs.autoPlayEnabled ?? true;
+              }
+              if (voiceSpeed) {
+                voiceSpeed.value = prefs.speed ?? 1.0;
+              }
+            } catch (e) {
+              console.error('Failed to load voice preferences:', e);
+            }
+          }
+        }
+      }, 100);
+
+      // Stop checking after 10 seconds
+      setTimeout(() => clearInterval(checkVoiceUI), 10000);
+    }, 500);
+
+    return voiceSection;
   }
 
   // Inject the agent selector

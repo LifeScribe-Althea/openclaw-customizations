@@ -1,0 +1,54 @@
+{
+  "agents": {
+    "althea": {
+      "voiceId": "c99f388c",
+      "voiceName": "Anya",
+      "gender": "female",
+      "accent": "American",
+      "description": "Warm, free-spirited, intelligent - the wise leader",
+      "settings": {
+        "speed": 1.0
+      }
+    },
+    "sage": {
+      "voiceId": "fb2d2858",
+      "voiceName": "Lucy",
+      "gender": "female",
+      "accent": "American",
+      "description": "Warm, patient, clear, genuinely caring - customer support specialist",
+      "settings": {
+        "speed": 0.95
+      }
+    },
+    "tally": {
+      "voiceId": "7c4296be",
+      "voiceName": "Grant",
+      "gender": "male",
+      "accent": "American",
+      "description": "Professional, precise, analytical - finance specialist",
+      "settings": {
+        "speed": 1.05
+      }
+    },
+    "echo": {
+      "voiceId": "41b99669",
+      "voiceName": "Alex",
+      "gender": "male",
+      "accent": "American",
+      "description": "Energetic, creative, engaging - marketing specialist (distinct from Tally)",
+      "settings": {
+        "speed": 1.1
+      }
+    }
+  },
+  "notes": {
+    "status": "All voices configured with Resemble.ai library voices",
+    "voices": {
+      "althea": "Anya (c99f388c) - Warm, free-spirited leader",
+      "sage": "Lucy (fb2d2858) - Warm, caring customer support",
+      "tally": "Grant (7c4296be) - Professional, precise finance",
+      "echo": "Alex (41b99669) - Energetic, creative marketing"
+    },
+    "testing": "Use test-all-voices.js script to verify all voices"
+  }
+}
