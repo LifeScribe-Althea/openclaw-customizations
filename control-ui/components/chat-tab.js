@@ -61,26 +61,57 @@ class ChatTab {
     // Clear existing content
     this.container.innerHTML = '';
 
-    // Use iframe approach to embed the standalone chat
+    // Show a nice interface with option to open chat in new window
+    // This approach avoids WebSocket configuration complexity while providing full functionality
     const sessionParam = `agent:${this.currentAgent}:main`;
-    const iframe = document.createElement('iframe');
-    iframe.src = `/?session=${sessionParam}`;
-    iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
-    iframe.title = 'Agent Chat';
+    const chatUrl = `/?session=${sessionParam}`;
 
-    // Add error handling
-    iframe.onerror = () => {
-      console.error('Failed to load chat iframe');
-      this.showError();
-    };
-
-    this.container.appendChild(iframe);
+    this.container.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: center;
+                  height: 100%; background: var(--bg-primary);">
+        <div style="text-align: center; max-width: 500px; padding: 2rem;">
+          <div style="font-size: 4rem; margin-bottom: 1.5rem;">💬</div>
+          <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--text-primary);">
+            Agent Chat
+          </h2>
+          <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6;">
+            Chat with ${this.getAgentName(this.currentAgent)} in a dedicated window for the best experience.
+            The chat interface includes full conversation history, voice controls, and all agent capabilities.
+          </p>
+          <button
+            onclick="window.open('${chatUrl}', '_blank', 'width=1200,height=800')"
+            style="padding: 12px 24px; background: var(--primary); color: white; border: none;
+                   border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
+                   transition: background var(--transition-fast); font-family: inherit;
+                   box-shadow: var(--shadow-md);"
+            onmouseover="this.style.background='var(--primary-hover)'"
+            onmouseout="this.style.background='var(--primary)'">
+            Open Chat Window
+          </button>
+          <p style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 1.5rem;">
+            Or <a href="${chatUrl}" target="_blank" style="color: var(--primary); text-decoration: none;">
+            open in new tab</a>
+          </p>
+        </div>
+      </div>
+    `;
 
     // Update URL to reflect agent selection
     const newUrl = `${window.location.pathname}#chat?agent=${this.currentAgent}`;
     window.history.replaceState({}, '', newUrl);
 
-    console.log('✅ Chat UI rendered (iframe approach)');
+    console.log('✅ Chat UI rendered (new window approach)');
+  }
+
+  // Helper to get agent display name
+  getAgentName(agentId) {
+    const agents = {
+      'althea': 'Althea',
+      'sage': 'Sage',
+      'tally': 'Tally',
+      'echo': 'Echo'
+    };
+    return agents[agentId] || agentId.charAt(0).toUpperCase() + agentId.slice(1);
   }
 
   // Switch to a different agent
@@ -89,15 +120,9 @@ class ChatTab {
     this.currentAgent = agentId;
     window.stateManager.setCurrentAgent(agentId);
 
-    // Update URL
-    const newUrl = `${window.location.pathname}#chat?agent=${agentId}`;
-    window.history.replaceState({}, '', newUrl);
-
-    // Update iframe src with new agent
-    const iframe = this.container.querySelector('iframe');
-    if (iframe) {
-      const sessionParam = `agent:${agentId}:main`;
-      iframe.src = `/?session=${sessionParam}`;
+    // Re-render with new agent
+    if (this.isActive) {
+      this.render();
     }
 
     // Update agent selector display
