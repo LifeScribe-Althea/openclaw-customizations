@@ -175,7 +175,21 @@
 
   // Get authentication token
   function getToken() {
-    return localStorage.getItem('openclaw_token') || sessionStorage.getItem('openclaw_token');
+    // Try localStorage/sessionStorage first
+    let token = localStorage.getItem('openclaw_token') || sessionStorage.getItem('openclaw_token');
+
+    // If not found, try URL query parameter
+    if (!token) {
+      const params = new URLSearchParams(window.location.search);
+      token = params.get('token');
+
+      // If found in URL, store it for future requests
+      if (token) {
+        sessionStorage.setItem('openclaw_token', token);
+      }
+    }
+
+    return token;
   }
 
   // Fetch API helper
